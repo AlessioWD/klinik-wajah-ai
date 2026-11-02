@@ -32,14 +32,6 @@ st.set_page_config(
 # Custom Styling CSS: Minimalist Clinical Design (Bebas Estetika AI Slop)
 st.markdown(
     """
-    <head>
-        <link rel="manifest" href="static/manifest.json">
-        <meta name="theme-color" content="#0F172A">
-        <meta name="mobile-web-app-capable" content="yes">
-        <meta name="apple-mobile-web-app-capable" content="yes">
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-        <link rel="apple-touch-icon" href="static/icon-192.png">
-    </head>
     <style>
     /* Global Typography & Background */
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
@@ -230,14 +222,13 @@ input_mode = st.sidebar.radio(
     label_visibility="collapsed",
 )
 
-# 3. Informasi Akses dari HP (Mobile / Wi-Fi)
-local_ip = get_local_ip()
-with st.sidebar.expander("Konektivitas Jaringan Lokal"):
+with st.sidebar.expander("Akses Publik Mobile (24/7)"):
     st.markdown(
-        f"""
-        Untuk mengakses via Wi-Fi lokal dari perangkat mobile:
-        * URL Jaringan: `http://{local_ip}:8501`
-        * Pastikan perangkat terhubung pada subnet yang sama.
+        """
+        **Tautan Resmi 24 Jam Nonstop:**
+        `https://klinik-wajah-ai.streamlit.app`
+        
+        Dapat dibuka langsung di HP (Android / iOS) dari mana saja menggunakan kuota/paket data 4G/5G.
         """
     )
 
