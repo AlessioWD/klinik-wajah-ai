@@ -95,4 +95,18 @@ class Visualizer:
             lip_color = cls.get_status_color(pallor_res.get("risk_level", "LOW"))
             cv2.polylines(out, [lip_pts], isClosed=True, color=lip_color, thickness=1, lineType=cv2.LINE_AA)
 
+        # 5. Siluet Panduan Oval Wajah Klinis (Smart Oval Framing Guide)
+        h, w = out.shape[:2]
+        center = (int(w / 2), int(h * 0.50))
+        axes = (int(w * 0.28), int(h * 0.38))
+        guide_overlay = out.copy()
+        cv2.ellipse(guide_overlay, center, axes, 0, 0, 360, (200, 240, 220), 1, cv2.LINE_AA)
+        ax_w, ax_h = axes[0], axes[1]
+        cv2.line(guide_overlay, (center[0] - 12, center[1] - ax_h), (center[0] + 12, center[1] - ax_h), (34, 197, 94), 2, cv2.LINE_AA)
+        cv2.line(guide_overlay, (center[0] - 12, center[1] + ax_h), (center[0] + 12, center[1] + ax_h), (34, 197, 94), 2, cv2.LINE_AA)
+        cv2.line(guide_overlay, (center[0] - ax_w, center[1] - 12), (center[0] - ax_w, center[1] + 12), (34, 197, 94), 2, cv2.LINE_AA)
+        cv2.line(guide_overlay, (center[0] + ax_w, center[1] - 12), (center[0] + ax_w, center[1] + 12), (34, 197, 94), 2, cv2.LINE_AA)
+        cv2.addWeighted(guide_overlay, 0.4, out, 0.6, 0, out)
+
         return out
+

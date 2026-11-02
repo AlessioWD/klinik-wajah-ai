@@ -38,7 +38,7 @@ class ColorCalibrator:
 
     @staticmethod
     def estimate_ambient_illuminant(image_bgr: np.ndarray) -> dict:
-        """Mengestimasi apakah lampu ruangan cenderung hangat (kuning/merah) atau dingin (putih/kebiruan)."""
+        """Mengestimasi suhu warna lampu dan tingkat kecerahan ruangan (luminansi)."""
         b, g, r = cv2.split(image_bgr)
         mean_b = float(np.mean(b))
         mean_r = float(np.mean(r))
@@ -55,8 +55,19 @@ class ColorCalibrator:
             lighting_type = "Neutral Daylight (Cahaya Putih Seimbang)"
             is_warm = False
 
+        # Hitung tingkat kecerahan rata-rata (Luminansi Grayscale 0 - 255)
+        gray = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2GRAY)
+        brightness = float(np.mean(gray))
+
+        is_too_dark = brightness < 60.0
+        is_too_bright = brightness > 220.0
+
         return {
             "lighting_type": lighting_type,
             "is_warm": is_warm,
             "rb_ratio": round(ratio_rb, 2),
+            "brightness": round(brightness, 1),
+            "is_too_dark": is_too_dark,
+            "is_too_bright": is_too_bright,
         }
+

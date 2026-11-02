@@ -641,6 +641,16 @@ def process_and_display(frame_bgr: np.ndarray, patient_name: str, is_video: bool
         if "illuminant_info" in jnd_res:
             illum = jnd_res["illuminant_info"]
             st.caption(f"Kondisi Pencahayaan: **{illum['lighting_type']}** (Normalisasi Gray-World Aktif)")
+            if illum.get("is_too_dark"):
+                st.warning(
+                    f"⚠️ Pencahayaan Redup: Ruangan terdeteksi agak gelap (kecerahan {illum.get('brightness', 0):.0f}/255). "
+                    "Disarankan menyalakan lampu agar analisis warna sklera mata dan bibir terbaca maksimal."
+                )
+            elif illum.get("is_too_bright"):
+                st.warning(
+                    f"⚠️ Pencahayaan Silau: Area wajah terdeteksi overexposed (kecerahan {illum.get('brightness', 0):.0f}/255). "
+                    "Hindari lampu sorot langsung ke arah kamera."
+                )
 
     with col_details:
         st.markdown("##### Evaluasi Triangulasi & Rekomendasi Klinis")
@@ -866,9 +876,13 @@ with tab_screen:
                 <div style="font-weight:600; color:#0F172A; font-size:0.92rem;">Perekaman Citra Aktif — Subjek: <strong>{selected_patient}</strong></div>
                 <div style="font-size:0.82rem; color:#64748B; margin-top:2px;">Posisikan wajah tepat di hadapan lensa kamera, buka mata normal, dan pertahankan ekspresi netral santai.</div>
             </div>
-            <div style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:6px; padding:0.55rem 0.85rem; margin-bottom:0.75rem; font-size:0.82rem; color:#166534; display:flex; align-items:center; gap:8px;">
+            <div style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:6px; padding:0.55rem 0.85rem; margin-bottom:0.55rem; font-size:0.82rem; color:#166534; display:flex; align-items:center; gap:8px;">
                 <span>💡</span>
                 <span><strong>Jika kamera belum menyala:</strong> Klik ikon setelan di sebelah kiri alamat web (URL bar Chrome) lalu ubah opsi <strong>Camera / Kamera</strong> menjadi <strong>Izinkan (Allow)</strong>, kemudian segarkan (refresh) halaman.</span>
+            </div>
+            <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:6px; padding:0.55rem 0.85rem; margin-bottom:0.75rem; font-size:0.82rem; color:#475569; display:flex; align-items:center; gap:8px;">
+                <span>📱</span>
+                <span><strong>Tips Penggunaan di HP:</strong> Ketuk tombol putar (↺) pada jendela kamera peramban untuk beralih ke kamera belakang saat memeriksa orang lain/pasien.</span>
             </div>
             """,
             unsafe_allow_html=True,
@@ -978,6 +992,16 @@ with tab_history:
             ),
             use_container_width=True,
             hide_index=True,
+        )
+
+        st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
+        csv_bytes = hist_df.to_csv(index=False).encode('utf-8')
+        st.download_button(
+            label="📊 Unduh Basis Data Riwayat Pasien (.csv / Format Excel)",
+            data=csv_bytes,
+            file_name=f"database_skrining_{selected_patient}_{time.strftime('%Y%m%d')}.csv",
+            mime="text/csv",
+            use_container_width=True,
         )
 
 # TAB 3: FITUR KOMPARASI BEFORE & AFTER

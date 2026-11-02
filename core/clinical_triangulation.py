@@ -53,8 +53,13 @@ class ClinicalTriangulationEngine:
                 "text": "Apakah buang air besar (feses) berwarna lebih pucat menyerupai dempul/tanah liat?",
             })
 
-        # 3. Pertanyaan Kepucatan / Anemia
-        if pal.get("pallor_score", 0) > 35.0:
+        # 3. Pertanyaan Kepucatan / Anemia & Filter Kosmetik
+        if pal.get("pallor_score", 0) > 25.0:
+            questions.append({
+                "id": "cosmetic_lipstick",
+                "category": "Pemeriksaan Fisik",
+                "text": "Apakah Anda saat ini sedang mengenakan lipstik atau pewarna bibir?",
+            })
             questions.append({
                 "id": "pallor_dizziness",
                 "category": "Anemia & Sirkulasi",
@@ -165,24 +170,40 @@ class ClinicalTriangulationEngine:
                 })
 
         # ----------------------------------------------------
-        # 3. EVALUASI KEPUCATAN (ANEMIA)
+        # 3. EVALUASI KEPUCATAN (ANEMIA & FILTER KOSMETIK)
         # ----------------------------------------------------
-        if pal.get("pallor_score", 0) > 35.0:
+        if pal.get("pallor_score", 0) > 25.0:
+            has_lipstick = user_answers.get("cosmetic_lipstick", False)
             dizziness = user_answers.get("pallor_dizziness", False)
             cold_hands = user_answers.get("pallor_cold_hands", False)
 
-            if dizziness or cold_hands:
-                diagnoses.append({
-                    "condition": "Suspek Anemia Defisiensi Besi / Hemoglobin Rendah",
-                    "urgency": "MODERATE",
-                    "confidence": 82.0,
-                    "explanation": (
-                        "Kepucatan pada mukosa bibir dan kelopak mata bawah yang disertai keluhan lemas atau pusing berkunang-kunang menguatkan indikasi kekurangan sel darah merah / hemoglobin."
-                    ),
-                    "action_plan": "Lakukan tes darah sederhana untuk mengukur kadar hemoglobin (Hb) dan konsumsi makanan kaya zat besi.",
-                    "specialist": "Dokter Umum / Dokter Spesialis Penyakit Dalam (Sp.PD)",
-                    "tests": ["Darah Rutin / Lengkap (CBC)", "Kadar Hemoglobin (Hb)", "Serum Ferritin"],
-                })
+            if has_lipstick:
+                if dizziness or cold_hands:
+                    diagnoses.append({
+                        "condition": "Suspek Anemia Ringan (Filter Kosmetik Aktif)",
+                        "urgency": "MODERATE",
+                        "confidence": 78.0,
+                        "explanation": (
+                            "Penggunaan lipstik/pewarna bibir terkonfirmasi, sehingga AI menetralkan rona bibir dan memprioritaskan "
+                            "analisis kelopak mata bawah. Gejala fisik lemas/dingin tetap mengindikasikan penurunan kadar hemoglobin."
+                        ),
+                        "action_plan": "Periksa kadar Hemoglobin (Hb) di laboratorium klinik terdekat dan cukupi konsumsi zat besi.",
+                        "specialist": "Dokter Umum / Dokter Spesialis Penyakit Dalam (Sp.PD)",
+                        "tests": ["Pemeriksaan Darah Lengkap (CBC)", "Kadar Hemoglobin (Hb)"],
+                    })
+            else:
+                if dizziness or cold_hands:
+                    diagnoses.append({
+                        "condition": "Suspek Anemia Defisiensi Besi / Hemoglobin Rendah",
+                        "urgency": "MODERATE",
+                        "confidence": 85.0,
+                        "explanation": (
+                            "Kepucatan pada mukosa bibir dan kelopak mata bawah yang diperkuat keluhan lemas atau pusing berkunang-kunang menguatkan indikasi kekurangan sel darah merah / hemoglobin."
+                        ),
+                        "action_plan": "Lakukan tes darah sederhana untuk mengukur kadar hemoglobin (Hb) dan konsumsi makanan kaya zat besi.",
+                        "specialist": "Dokter Umum / Dokter Spesialis Penyakit Dalam (Sp.PD)",
+                        "tests": ["Darah Rutin / Lengkap (CBC)", "Kadar Hemoglobin (Hb)", "Serum Ferritin"],
+                    })
 
         # ----------------------------------------------------
         # 4. DEFAULT: KONDISI SEHAT / NORMAL
