@@ -21,12 +21,44 @@ from core.clinical_triangulation import ClinicalTriangulationEngine
 from core.history_db import HistoryDatabase
 from utils.visualization import Visualizer
 
+import streamlit.components.v1 as components
+
 # Inisialisasi Halaman Streamlit
 st.set_page_config(
     page_title="FacialHealth | Clinical Biometric Screening",
-    page_icon="static/favicon.png",
+    page_icon="https://raw.githubusercontent.com/AlessioWD/klinik-wajah-ai/main/static/icon-512.png",
     layout="wide",
     initial_sidebar_state="expanded",
+)
+
+# Injeksi Dynamic PWA Icon ke Header Peramban Mobile
+components.html(
+    """
+    <script>
+    const iconUrl = 'https://raw.githubusercontent.com/AlessioWD/klinik-wajah-ai/main/static/icon-512.png';
+    const icon192 = 'https://raw.githubusercontent.com/AlessioWD/klinik-wajah-ai/main/static/icon-192.png';
+    
+    // Set apple-touch-icon untuk iOS & Android PWA
+    let appleIcon = window.parent.document.querySelector("link[rel='apple-touch-icon']");
+    if (!appleIcon) {
+        appleIcon = window.parent.document.createElement('link');
+        appleIcon.rel = 'apple-touch-icon';
+        window.parent.document.head.appendChild(appleIcon);
+    }
+    appleIcon.href = icon192;
+
+    // Set shortcut icon & favicon
+    let favIcon = window.parent.document.querySelector("link[rel*='icon']");
+    if (!favIcon) {
+        favIcon = window.parent.document.createElement('link');
+        favIcon.rel = 'shortcut icon';
+        window.parent.document.head.appendChild(favIcon);
+    }
+    favIcon.href = icon192;
+    </script>
+    """,
+    height=0,
+    width=0,
 )
 
 # Custom Styling CSS: Minimalist Clinical Design (Bebas Estetika AI Slop)
