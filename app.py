@@ -188,6 +188,52 @@ st.markdown(
         margin-top: 0.8rem;
         box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
     }
+
+    /* Mobile Responsive Fix for Checkbox & Anamnesis Questionnaire */
+    div[data-testid="stCheckbox"] {
+        width: 100% !important;
+        background: #FFFFFF !important;
+        border: 1px solid #E2E8F0 !important;
+        padding: 0.75rem 0.95rem !important;
+        border-radius: 8px !important;
+        margin-bottom: 0.55rem !important;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02) !important;
+        transition: border-color 0.15s ease, background-color 0.15s ease !important;
+    }
+    div[data-testid="stCheckbox"]:hover {
+        border-color: #CBD5E1 !important;
+        background-color: #F8FAFC !important;
+    }
+    div[data-testid="stCheckbox"] label {
+        display: flex !important;
+        align-items: flex-start !important;
+        gap: 10px !important;
+        width: 100% !important;
+        white-space: normal !important;
+        overflow: visible !important;
+        cursor: pointer !important;
+    }
+    div[data-testid="stCheckbox"] label > div:first-child {
+        margin-top: 3px !important;
+        flex-shrink: 0 !important;
+    }
+    div[data-testid="stCheckbox"] label div[data-testid="stMarkdownContainer"],
+    div[data-testid="stCheckbox"] label div[data-testid="stMarkdownContainer"] p,
+    div[data-testid="stCheckbox"] label span,
+    div[data-testid="stCheckbox"] span,
+    div[data-testid="stCheckbox"] p,
+    label[data-baseweb="checkbox"] p,
+    label[data-baseweb="checkbox"] div {
+        white-space: normal !important;
+        text-overflow: unset !important;
+        overflow: visible !important;
+        word-break: normal !important;
+        overflow-wrap: break-word !important;
+        line-height: 1.5 !important;
+        font-size: 0.9rem !important;
+        color: #1E293B !important;
+        margin: 0 !important;
+    }
     </style>
     """,
     unsafe_allow_html=True,

@@ -6,3 +6,5 @@ data/*.db
 data/test_*.db
 .vscode/
 .idea/
+*.exe
+cloudflared.exe
