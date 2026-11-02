@@ -28,7 +28,7 @@ st.set_page_config(
     page_title="FacialHealth | Clinical Biometric Screening",
     page_icon="https://raw.githubusercontent.com/AlessioWD/klinik-wajah-ai/main/static/icon-512.png",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 # Injeksi Dynamic PWA Icon & Pembersih Antarmuka Streamlit Cloud (Bebas Watermark)
@@ -317,10 +317,49 @@ st.markdown(
         left: -9999px !important;
     }
 
-    /* Penyesuaian padding atas untuk tampilan seperti Native App */
+    /* Sembunyikan sidebar bawaan agar tampilan 100% Full-Width bebas AI Slop */
+    [data-testid="stSidebar"],
+    [data-testid="collapsedControl"] {
+        display: none !important;
+        visibility: hidden !important;
+        width: 0 !important;
+        height: 0 !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+    }
+
+    /* Penyesuaian layout container untuk tampilan seperti Native App */
     .block-container {
-        padding-top: 1.5rem !important;
-        padding-bottom: 2rem !important;
+        max-width: 1200px !important;
+        padding-top: 1.2rem !important;
+        padding-bottom: 2.5rem !important;
+        margin: 0 auto !important;
+    }
+
+    /* SOS Alert & Emergency Hotline Styles */
+    .sos-card {
+        background-color: #FEF2F2;
+        border: 2px solid #EF4444;
+        border-radius: 10px;
+        padding: 1.15rem 1.25rem;
+        margin-top: 0.9rem;
+        box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.1);
+    }
+    .sos-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background-color: #DC2626;
+        color: #FFFFFF !important;
+        font-weight: 700;
+        font-size: 0.92rem;
+        padding: 8px 18px;
+        border-radius: 6px;
+        text-decoration: none !important;
+        transition: background-color 0.15s ease;
+    }
+    .sos-btn:hover {
+        background-color: #B91C1C;
     }
     </style>
     """,
@@ -354,87 +393,113 @@ def load_resources():
 
 detector, symmetry_analyzer, jaundice_analyzer, pallor_analyzer, rppg_estimator, fatigue_detector, db = load_resources()
 
-# ==========================================
-# SIDEBAR: PENGATURAN & MULTI-USER
-# ==========================================
-if os.path.exists(os.path.join(CURRENT_DIR, "static", "icon-192.png")):
-    st.sidebar.image("static/icon-192.png", width=52)
-st.sidebar.markdown("### FacialHealth")
-st.sidebar.caption("Sistem Skrining Biomarker Wajah v2.2")
 
-# 1. Pilihan Profil Pengguna (Multi-User)
-st.sidebar.markdown("---")
-st.sidebar.markdown("**Profil Subjek / Pasien:**")
-patients = db.get_patients()
-selected_patient = st.sidebar.selectbox("Pilih Profil", patients, index=0, label_visibility="collapsed")
+def generate_html_report(patient_name, primary_diag, sym, jnd, pal, rppg, fat):
+    """Menghasilkan lembar laporan resume medis resmi berbasis HTML siap cetak/simpan PDF."""
+    now_str = time.strftime('%d %B %Y, %H:%M:%S WIB')
+    urgency = primary_diag.get('urgency', 'LOW')
+    urgency_color = "#DC2626" if urgency == "EMERGENCY" else ("#D97706" if urgency == "HIGH" else ("#2563EB" if urgency == "MODERATE" else "#059669"))
+    bpm_val = f"{rppg.get('bpm'):.0f} BPM" if rppg.get('bpm') else "-"
 
-with st.sidebar.expander("Tambah Profil Baru"):
-    new_patient_name = st.text_input("Nama Profil:")
-    if st.button("Simpan", use_container_width=True):
-        if db.add_patient(new_patient_name):
-            st.success(f"Profil '{new_patient_name}' terdaftar.")
-            st.rerun()
-        else:
-            st.warning("Nama kosong atau telah digunakan.")
-
-st.sidebar.markdown("---")
-
-# 2. Pilihan Mode Input
-st.sidebar.markdown("**Modalitas Akuisisi Citra:**")
-input_mode = st.sidebar.radio(
-    "Modalitas",
-    ["Kamera Langsung (Webcam/Mobile)", "Unggah Citra Wajah", "Kasus Uji Terkalibrasi"],
-    index=0,
-    label_visibility="collapsed",
-)
-
-with st.sidebar.expander("Akses Publik Mobile (24/7)"):
-    st.markdown(
-        """
-        **Tautan Resmi 24 Jam Nonstop:**
-        `https://klinik-wajah-ai.streamlit.app`
-        
-        Dapat dibuka langsung di HP (Android / iOS) dari mana saja menggunakan kuota/paket data 4G/5G.
-        """
-    )
-
-with st.sidebar.expander("Instalasi Aplikasi (PWA)"):
-    st.markdown(
-        """
-        **Android / Chrome:**
-        Ketuk menu peramban (⋮) $\\rightarrow$ pilih **Install Aplikasi**.
-        
-        **iOS / Safari:**
-        Ketuk tombol Share (↑) $\\rightarrow$ pilih **Add to Home Screen**.
-        
-        **Desktop (Chrome/Edge):**
-        Klik tombol install pada bilah alamat peramban.
-        """
-    )
-
-# ==========================================
-# HEADER UTAMA (CLEAN BRANDING)
-# ==========================================
-st.markdown(
-    """
-    <div class="brand-container">
-        <div class="brand-title">FacialHealth <span class="brand-badge">CLINICAL TRIAGE</span></div>
+    return f"""<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resume Skrining Medis - {patient_name}</title>
+<style>
+    body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #F8FAFC; color: #1E293B; margin: 0; padding: 24px; }}
+    .report-card {{ max-width: 820px; margin: 0 auto; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 32px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.04); }}
+    .header {{ display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #0284C7; padding-bottom: 16px; margin-bottom: 20px; }}
+    .title {{ font-size: 20px; font-weight: 700; color: #0F172A; }}
+    .subtitle {{ font-size: 13px; color: #64748B; margin-top: 4px; }}
+    .badge {{ display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; background: {urgency_color}; color: #FFFFFF; }}
+    .section-title {{ font-size: 14px; font-weight: 700; color: #0F172A; margin: 20px 0 10px 0; border-left: 4px solid #0284C7; padding-left: 8px; text-transform: uppercase; letter-spacing: 0.04em; }}
+    table {{ width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }}
+    th, td {{ padding: 9px 12px; border-bottom: 1px solid #E2E8F0; text-align: left; }}
+    th {{ background: #F1F5F9; font-weight: 600; color: #475569; }}
+    .diag-box {{ background: #F8FAFC; border: 1px solid #E2E8F0; border-left: 4px solid {urgency_color}; border-radius: 8px; padding: 16px; margin-top: 10px; line-height: 1.6; font-size: 13.5px; }}
+    .footer-note {{ margin-top: 28px; padding-top: 16px; border-top: 1px dashed #CBD5E1; font-size: 11px; color: #94A3B8; text-align: center; line-height: 1.5; }}
+    @media print {{ body {{ background: #FFFFFF; padding: 0; }} .report-card {{ border: none; box-shadow: none; padding: 0; }} }}
+</style>
+</head>
+<body>
+<div class="report-card">
+    <div class="header">
+        <div>
+            <div class="title">FacialHealth — Resume Skrining Biometrik Fasial</div>
+            <div class="subtitle">Platform Evaluasi Komputasi Citra Wajah & Triangulasi Klinis Terarah</div>
+            <div class="subtitle">Waktu Pemeriksaan: <strong>{now_str}</strong></div>
+        </div>
+        <div style="text-align: right;">
+            <div class="badge">KLASIFIKASI: {urgency}</div>
+            <div class="subtitle" style="margin-top: 6px;">Subjek Pasien: <strong>{patient_name}</strong></div>
+        </div>
     </div>
-    <div class="brand-subtitle">Platform Skrining Biomarker Fisik Wajah & Triangulasi Gejala Terarah</div>
-    """,
-    unsafe_allow_html=True,
-)
 
-st.markdown(
-    """
-    <div class="clinical-notice">
-        <strong>Pemberitahuan Medis:</strong> Platform ini berfungsi sebagai instrumen skrining awal mandiri (triage) 
-        dan bukan instrumen diagnosis definitif. Pada kasus gejala akut yang timbul mendadak (seperti kelemahan unilateral tubuh, 
-        bicara pelo, atau ikterus progresif cepat), segera rujuk ke Instalasi Gawat Darurat atau fasilitas kesehatan terdekat.
+    <div class="section-title">I. Evaluasi Triangulasi & Rekomendasi Klinis</div>
+    <div class="diag-box">
+        <div style="font-size: 16px; font-weight: 700; color: #0F172A;">{primary_diag.get('condition', '-')}</div>
+        <div style="font-size: 12px; color: #64748B; margin-top: 2px;">Tingkat Konfidensi Skrining: <strong>{primary_diag.get('confidence', 0)}%</strong></div>
+        <p style="margin: 8px 0;">{primary_diag.get('explanation', '-')}</p>
+        <p style="margin: 6px 0;"><strong>Tindakan yang Disarankan:</strong> {primary_diag.get('action_plan', '-')}</p>
+        <p style="margin: 6px 0;"><strong>Disiplin Spesialis Terkait:</strong> {primary_diag.get('specialist', '-')}</p>
+        <p style="margin: 6px 0;"><strong>Modalitas Penunjang Diusulkan:</strong> {', '.join(primary_diag.get('tests', []))}</p>
     </div>
-    """,
-    unsafe_allow_html=True,
-)
+
+    <div class="section-title">II. Hasil Uji 5 Parameter Biomarker Visual</div>
+    <table>
+        <thead>
+            <tr>
+                <th>Biomarker Wajah</th>
+                <th>Nilai Terukur</th>
+                <th>Status / Interpretasi</th>
+                <th>Organ / Saraf Relevan</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Simetri Wajah</strong></td>
+                <td>{sym.get('symmetry_score', 0)}%</td>
+                <td>{sym.get('status', '-')}</td>
+                <td>Nervus Fasialis (N.VII) / Skrining Stroke</td>
+            </tr>
+            <tr>
+                <td><strong>Warna Putih Mata (Sklera)</strong></td>
+                <td>{jnd.get('jaundice_score', 0)} / 100</td>
+                <td>{jnd.get('status', '-')}</td>
+                <td>Hati, Kantung Empedu & Bilirubin</td>
+            </tr>
+            <tr>
+                <td><strong>Kemerahan Bibir (Perfusi)</strong></td>
+                <td>{pal.get('pallor_score', 0)} / 100</td>
+                <td>{pal.get('status', '-')}</td>
+                <td>Hemoglobin & Skrining Anemia</td>
+            </tr>
+            <tr>
+                <td><strong>Detak Jantung (Nadi Nirsentuh)</strong></td>
+                <td>{bpm_val}</td>
+                <td>{rppg.get('status', '-')}</td>
+                <td>Sistem Kardiovaskular</td>
+            </tr>
+            <tr>
+                <td><strong>Status Kelopak Mata</strong></td>
+                <td>{100 - fat.get('fatigue_score', 0):.0f}% Segar</td>
+                <td>{fat.get('status', '-')}</td>
+                <td>Kebugaran Fisik & Tingkat Kantuk</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="footer-note">
+        <strong>Pemberitahuan Medis Resmi:</strong> Dokumen ini diterbitkan secara otomatis oleh sistem komputasi visual (FacialHealth) 
+        sebagai instrumen skrining mandiri awal. Dokumen ini bukan pengganti rekam medis atau vonis klinis definitif. 
+        Tunjukkan hasil ini kepada dokter berwenang di fasilitas kesehatan terdekat untuk tindakan diagnosis lanjutan.
+    </div>
+</div>
+</body>
+</html>"""
+
 
 
 def render_metric_cards(sym, jnd, pal, rppg, fat):
@@ -524,7 +589,7 @@ def render_metric_cards(sym, jnd, pal, rppg, fat):
         )
 
 
-def process_and_display(frame_bgr: np.ndarray, is_video: bool = False):
+def process_and_display(frame_bgr: np.ndarray, patient_name: str, is_video: bool = False):
     """Menjalankan analisis lengkap dan merender hasil skrining klinis."""
     lms_dict = detector.process_image(frame_bgr)
 
@@ -614,13 +679,61 @@ def process_and_display(frame_bgr: np.ndarray, is_video: bool = False):
             unsafe_allow_html=True,
         )
 
+        # FITUR: Tombol Audio Asisten Suara Medis
+        clean_cond = primary_diag['condition'].replace('"', '').replace("'", "")
+        clean_plan = primary_diag['action_plan'].replace('"', '').replace("'", "")
+        speech_text = f"Hasil skrining wajah Anda adalah {clean_cond}. Urgensi: {urgency}. Tindakan yang dianjurkan: {clean_plan}"
+        components.html(
+            f"""
+            <div style="margin-top: 6px;">
+                <button onclick="speakMedicalReport()" style="background:#FFFFFF; border:1px solid #CBD5E1; color:#0F172A; padding:6px 14px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:6px; box-shadow:0 1px 2px rgba(0,0,0,0.04);">
+                    🔊 Dengarkan Penjelasan Suara
+                </button>
+            </div>
+            <script>
+            function speakMedicalReport() {{
+                if ('speechSynthesis' in window) {{
+                    window.speechSynthesis.cancel();
+                    const msg = new SpeechSynthesisUtterance("{speech_text}");
+                    msg.lang = "id-ID";
+                    msg.rate = 0.92;
+                    window.speechSynthesis.speak(msg);
+                }} else {{
+                    alert("Fitur audio tidak didukung oleh peramban ini.");
+                }}
+            }}
+            </script>
+            """,
+            height=44,
+        )
+
+        # FITUR: Kartu Tanggap Darurat FAST (Hotline 119) jika Urgensi Tinggi / Darurat
+        if urgency in ["EMERGENCY", "HIGH"]:
+            st.markdown(
+                """
+                <div class="sos-card">
+                    <div style="font-weight:700; color:#991B1B; font-size:1.02rem;">
+                        🚨 PERINGATAN GAWAT DARURAT MEDIS (F.A.S.T.)
+                    </div>
+                    <div style="font-size:0.86rem; color:#7F1D1D; margin-top:5px; line-height:1.5;">
+                        Terdeteksi tanda klinis akut yang memerlukan tindakan medis segera. Tetap tenang, jangan biarkan pasien berjalan sendiri, dan segera hubungi tim ambulans gawat darurat.
+                    </div>
+                    <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
+                        <a href="tel:119" class="sos-btn">📞 Panggil Ambulans (119)</a>
+                        <a href="tel:112" class="sos-btn" style="background-color:#991B1B;">📞 Darurat Nasional (112)</a>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
         st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
 
-        col_btn1, col_btn2 = st.columns(2)
+        col_btn1, col_btn2, col_btn3 = st.columns(3)
         with col_btn1:
-            if st.button(f"Simpan Catatan Skrining", use_container_width=True):
+            if st.button("💾 Simpan Catatan", use_container_width=True):
                 db.save_screening(
-                    patient_name=selected_patient,
+                    patient_name=patient_name,
                     symmetry_score=sym_res.get("symmetry_score"),
                     jaundice_score=jnd_res.get("jaundice_score"),
                     pallor_score=pal_res.get("pallor_score"),
@@ -630,12 +743,12 @@ def process_and_display(frame_bgr: np.ndarray, is_video: bool = False):
                     urgency=primary_diag["urgency"],
                     notes=f"Konfidensi: {primary_diag['confidence']}%",
                 )
-                st.success(f"Tersimpan pada profil '{selected_patient}'.")
+                st.success(f"Tersimpan pada profil '{patient_name}'.")
 
         with col_btn2:
             report_txt = f"""==================================================
 LAPORAN RESMI SKRINING BIOMARKER FASIAL (TRIAGE)
-Identitas Subjek: {selected_patient}
+Identitas Subjek: {patient_name}
 Waktu Akuisisi  : {time.strftime('%d-%m-%Y %H:%M:%S')}
 ==================================================
 
@@ -649,50 +762,133 @@ Waktu Akuisisi  : {time.strftime('%d-%m-%Y %H:%M:%S')}
 - Pemeriksaan Penunjang : {', '.join(primary_diag['tests'])}
 
 2. METRIK PARAMETER VISUAL:
-- Simetri Fasialis (N.VII)   : {sym_res.get('symmetry_score')}% ({sym_res.get('status')})
-- Sklera Ikterus (Bilirubin) : {jnd_res.get('jaundice_score')}/100 ({jnd_res.get('status')})
-- Perfusi Mukosa (Hemoglobin): {pal_res.get('pallor_score')}/100 ({pal_res.get('status')})
-- Fotopletismografi Nirsentuh: {rppg_res.get('bpm', '-')} BPM ({rppg_res.get('status')})
-- Indeks Kebugaran Palpebra  : {100 - fat_res.get('fatigue_score', 0):.0f}% Optimal ({fat_res.get('status')})
+- Simetri Wajah (N.VII)      : {sym_res.get('symmetry_score')}% ({sym_res.get('status')})
+- Warna Putih Mata (Sklera)  : {jnd_res.get('jaundice_score')}/100 ({jnd_res.get('status')})
+- Kemerahan Bibir (Perfusi)  : {pal_res.get('pallor_score')}/100 ({pal_res.get('status')})
+- Detak Nadi via Kamera Dahi : {rppg_res.get('bpm', '-')} BPM ({rppg_res.get('status')})
+- Kebugaran Kelopak Mata     : {100 - fat_res.get('fatigue_score', 0):.0f}% Segar ({fat_res.get('status')})
 
 ==================================================
 DISCLAIMER: Dokumen ini diterbitkan sebagai hasil skrining terkomputasi dan bukan merupakan pengganti diagnosis medis resmi.
 =================================================="""
             st.download_button(
-                label="Unduh Berkas Laporan (.txt)",
+                label="📄 Unduh Ringkasan (.txt)",
                 data=report_txt,
-                file_name=f"laporan_skrining_{selected_patient}_{time.strftime('%Y%m%d_%H%M%S')}.txt",
+                file_name=f"laporan_skrining_{patient_name}_{time.strftime('%Y%m%d_%H%M%S')}.txt",
                 mime="text/plain",
+                use_container_width=True,
+            )
+
+        with col_btn3:
+            html_report = generate_html_report(patient_name, primary_diag, sym_res, jnd_res, pal_res, rppg_res, fat_res)
+            st.download_button(
+                label="🖨️ Cetak Resume (.html)",
+                data=html_report,
+                file_name=f"resume_medis_{patient_name}_{time.strftime('%Y%m%d_%H%M%S')}.html",
+                mime="text/html",
                 use_container_width=True,
             )
 
 
 # ==========================================
-# RENDER INPUT SUMBER KAMERA / FOTO
+# TOP APP BAR: MODERN CLINICAL HEADER (BEBAS SIDEBAR)
 # ==========================================
-tab_screen, tab_history = st.tabs(["Pemeriksaan Sesi Berjalan", "Riwayat & Rekam Perkembangan"])
+col_brand, col_profile = st.columns([1.65, 1.15])
+
+with col_brand:
+    st.markdown(
+        """
+        <div class="brand-container">
+            <div class="brand-title">FacialHealth <span class="brand-badge">CLINICAL BIOMETRICS v2.3</span></div>
+        </div>
+        <div class="brand-subtitle">Platform Skrining Biomarker Fisik Wajah & Triangulasi Gejala Terarah</div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+with col_profile:
+    patients = db.get_patients()
+    st.markdown("<div style='font-size:0.75rem; font-weight:700; color:#64748B; text-transform:uppercase; margin-bottom:4px;'>👤 Subjek Pasien Aktif:</div>", unsafe_allow_html=True)
+    c_pat, c_add = st.columns([1.7, 0.9])
+    with c_pat:
+        selected_patient = st.selectbox("Pilih Profil", patients, index=0, label_visibility="collapsed")
+    with c_add:
+        with st.popover("➕ Baru"):
+            st.markdown("**Tambah Profil Pasien Baru**")
+            new_p_name = st.text_input("Nama Lengkap:", placeholder="Contoh: Budi Santoso")
+            if st.button("Simpan Profil", use_container_width=True):
+                if db.add_patient(new_p_name):
+                    st.success(f"Profil '{new_p_name}' terdaftar.")
+                    st.rerun()
+                else:
+                    st.warning("Nama tidak boleh kosong atau sudah terdaftar.")
+
+# Clinical Notice Bar
+st.markdown(
+    """
+    <div class="clinical-notice">
+        <strong>Pemberitahuan Medis:</strong> Platform ini berfungsi sebagai instrumen skrining awal mandiri (triage) 
+        dan bukan vonis medis definitif. Pada kasus gejala akut yang timbul mendadak (seperti bibir miring mendadak, kebas separuh badan, 
+        atau mata kuning pekat), segera hubungi layanan gawat darurat atau periksakan ke dokter spesialis terdekat.
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+# ==========================================
+# NAVIGASI UTAMA: 4 TAB MODERN (100% RESPOCIF DI HP & PC)
+# ==========================================
+tab_screen, tab_history, tab_compare, tab_info = st.tabs([
+    "📷 Pemeriksaan Wajah",
+    "📋 Rekam Medis Pasien",
+    "🔄 Komparasi Before & After",
+    "ℹ️ Panduan & Info Layanan",
+])
 
 with tab_screen:
-    if input_mode == "Kamera Langsung (Webcam/Mobile)":
-        st.markdown(f"**Perekaman Citra Aktif — Subjek: `{selected_patient}`**")
-        st.caption("Posisikan wajah tepat di hadapan lensa dan pertahankan ekspresi netral.")
+    # Segmented Radio Bar untuk Modalitas (Tampilan Bersih Bebas AI Slop)
+    input_mode = st.radio(
+        "Pilih Metode Pemeriksaan:",
+        ["📷 Kamera Langsung (Webcam / HP)", "🖼️ Unggah Berkas Foto Wajah", "🧪 Kasus Uji Standar Klinis"],
+        index=0,
+        horizontal=True,
+    )
+
+    if input_mode == "📷 Kamera Langsung (Webcam / HP)":
+        st.markdown(
+            f"""
+            <div style="background:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:0.85rem 1.1rem; margin-bottom:0.75rem;">
+                <div style="font-weight:600; color:#0F172A; font-size:0.92rem;">Perekaman Citra Aktif — Subjek: <strong>{selected_patient}</strong></div>
+                <div style="font-size:0.82rem; color:#64748B; margin-top:2px;">Posisikan wajah tepat di hadapan lensa kamera, buka mata normal, dan pertahankan ekspresi netral santai.</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
         cam_picture = st.camera_input("Ambil Citra Skrining", label_visibility="collapsed")
 
         if cam_picture is not None:
             bytes_data = cam_picture.getvalue()
             cv_img = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
-            process_and_display(cv_img, is_video=True)
+            process_and_display(cv_img, patient_name=selected_patient, is_video=True)
 
-    elif input_mode == "Unggah Citra Wajah":
-        st.markdown(f"**Unggah Berkas Citra — Subjek: `{selected_patient}`**")
-        uploaded_file = st.file_uploader("Pilih file foto wajah (Format JPG / PNG)", type=["jpg", "jpeg", "png"], label_visibility="collapsed")
+    elif input_mode == "🖼️ Unggah Berkas Foto Wajah":
+        st.markdown(
+            f"""
+            <div style="background:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:0.85rem 1.1rem; margin-bottom:0.75rem;">
+                <div style="font-weight:600; color:#0F172A; font-size:0.92rem;">Unggah Berkas Citra — Subjek: <strong>{selected_patient}</strong></div>
+                <div style="font-size:0.82rem; color:#64748B; margin-top:2px;">Gunakan foto close-up wajah beresolusi jelas dengan pencahayaan seimbang (Format JPG / PNG).</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        uploaded_file = st.file_uploader("Pilih file foto wajah", type=["jpg", "jpeg", "png"], label_visibility="collapsed")
 
         if uploaded_file is not None:
             file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
             cv_img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
-            process_and_display(cv_img, is_video=False)
+            process_and_display(cv_img, patient_name=selected_patient, is_video=False)
 
-    elif input_mode == "Kasus Uji Terkalibrasi":
+    elif input_mode == "🧪 Kasus Uji Standar Klinis":
         st.markdown("**Profil Kasus Uji Standar Laboratorium**")
         sample_case = st.selectbox(
             "Pilih Profil Uji:",
@@ -731,14 +927,14 @@ with tab_screen:
         elif "Profil 4" in sample_case:
             cv2.putText(test_img, "[Simulasi Kepucatan Mukosa]", (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (180, 180, 180), 2)
 
-        process_and_display(test_img, is_video=False)
+        process_and_display(test_img, patient_name=selected_patient, is_video=False)
 
 with tab_history:
-    st.markdown(f"**Rekam Medis & Tren Biomarker — Subjek: `{selected_patient}`**")
+    st.markdown(f"**Rekam Medis & Riwayat Perkembangan — Subjek: `{selected_patient}`**")
     hist_df = db.get_patient_history(selected_patient)
 
     if hist_df.empty:
-        st.info(f"Belum ada catatan riwayat terdaftar untuk subjek '{selected_patient}'. Lakukan skrining dan simpan hasil evaluasi.")
+        st.info(f"Belum ada catatan riwayat terdaftar untuk subjek '{selected_patient}'. Lakukan skrining di tab Pemeriksaan Wajah dan simpan hasil evaluasi.")
     else:
         st.caption(f"Total **{len(hist_df)} sesi pemeriksaan** terdaftar.")
 
@@ -774,3 +970,86 @@ with tab_history:
             use_container_width=True,
             hide_index=True,
         )
+
+# TAB 3: FITUR KOMPARASI BEFORE & AFTER
+with tab_compare:
+    st.markdown(f"**Komparasi Perkembangan Biomarker (Before & After) — Subjek: `{selected_patient}`**")
+    hist_df = db.get_patient_history(selected_patient)
+
+    if len(hist_df) < 2:
+        st.info(
+            f"Diperlukan minimal **2 sesi pemeriksaan tersimpan** untuk menganalisis komparasi Before & After pada profil '{selected_patient}'. "
+            "Silakan lakukan pemeriksaan di tab 'Pemeriksaan Wajah' dan simpan catatan skrining terlebih dahulu."
+        )
+    else:
+        st.caption("Pilih dua sesi pemeriksaan untuk melihat tren perbaikan klinis:")
+        sess_options = [f"Sesi #{row['id']} - {row['timestamp']} ({row['primary_condition']})" for _, row in hist_df.iterrows()]
+
+        col_s1, col_s2 = st.columns(2)
+        with col_s1:
+            sel_old = st.selectbox("Sesi Sebelumnya (Before):", sess_options, index=len(sess_options)-1)
+        with col_s2:
+            sel_new = st.selectbox("Sesi Terbaru (After):", sess_options, index=0)
+
+        id_old = int(sel_old.split(" - ")[0].replace("Sesi #", ""))
+        id_new = int(sel_new.split(" - ")[0].replace("Sesi #", ""))
+
+        row_old = hist_df[hist_df["id"] == id_old].iloc[0]
+        row_new = hist_df[hist_df["id"] == id_new].iloc[0]
+
+        st.markdown("##### Perubahan Nilai Biomarker:")
+        cc1, cc2, cc3, cc4 = st.columns(4)
+        with cc1:
+            sym_diff = row_new["symmetry_score"] - row_old["symmetry_score"]
+            sym_tag = f"+{sym_diff:.1f}%" if sym_diff >= 0 else f"{sym_diff:.1f}%"
+            st.metric("Simetri Wajah", f"{row_new['symmetry_score']}%", delta=sym_tag)
+        with cc2:
+            jnd_diff = row_new["jaundice_score"] - row_old["jaundice_score"]
+            jnd_tag = f"{jnd_diff:.1f}"
+            st.metric("Kuning Mata (Sklera)", f"{row_new['jaundice_score']}", delta=jnd_tag, delta_color="inverse")
+        with cc3:
+            pal_diff = row_new["pallor_score"] - row_old["pallor_score"]
+            pal_tag = f"{pal_diff:.1f}"
+            st.metric("Kepucatan Bibir", f"{row_new['pallor_score']}", delta=pal_tag, delta_color="inverse")
+        with cc4:
+            bpm_diff = (row_new["bpm"] or 0) - (row_old["bpm"] or 0)
+            bpm_str = f"{row_new['bpm']:.0f} BPM" if row_new["bpm"] else "-"
+            st.metric("Detak Nadi", bpm_str, delta=f"{bpm_diff:.0f} BPM")
+
+        st.markdown(
+            f"""
+            <div style="background:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:1.1rem; margin-top:1rem;">
+                <div style="font-weight:700; color:#0F172A; margin-bottom:0.4rem;">Perbandingan Kesimpulan Klinis:</div>
+                <div style="font-size:0.88rem; color:#475569; line-height:1.6;">
+                    • <strong>Sebelum ({row_old['timestamp']}):</strong> {row_old['primary_condition']} (Tingkat Urgensi: <em>{row_old['urgency']}</em>)<br>
+                    • <strong>Terbaru ({row_new['timestamp']}):</strong> {row_new['primary_condition']} (Tingkat Urgensi: <em>{row_new['urgency']}</em>)
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+# TAB 4: PANDUAN PENGGUNAAN & INFO LAYANAN
+with tab_info:
+    st.markdown("### Informasi Layanan & Panduan Penggunaan")
+    col_i1, col_i2 = st.columns(2)
+    with col_i1:
+        st.markdown(
+            """
+            #### 📱 Akses Publik 24/7 & Penggunaan di Smartphone
+            Aplikasi ini aktif secara online dan dapat diakses dari browser HP Android & iOS dari mana saja:
+            - **Tautan Resmi:** `https://klinik-wajah-ai.streamlit.app`
+            - **Pencahayaan Optimal:** Pastikan berada di ruangan dengan pencahayaan seimbang (*cahaya putih / daylight*). Hindari lampu remang-remang atau cahaya warna-warni yang dapat memengaruhi analisis warna sklera.
+            - **Posisi Kamera:** Posisikan wajah berjarak 40–60 cm dari lensa kamera, tegak lurus, dan ekspresi netral santai.
+            """
+        )
+    with col_i2:
+        st.markdown(
+            """
+            #### 🔒 Privasi Data & Keamanan Biometrik
+            - **Pemrosesan In-Memory:** Foto wajah dan citra kamera diproses secara lokal di memori sementara dan **tidak diunggah** ke cloud publik.
+            - **Database Lokal:** Hanya skor metrik angka (tanpa foto) yang tersimpan pada riwayat rekam medis pasien di perangkat ini.
+            - **Standar Skrining Medis:** Mengacu pada pedoman klinis *F.A.S.T.* (Stroke), *CIELAB colorimetry* (Ikterus), dan spektroskopi optik rPPG.
+            """
+        )
+
