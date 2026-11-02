@@ -361,6 +361,11 @@ st.markdown(
     .sos-btn:hover {
         background-color: #B91C1C;
     }
+
+    /* Sembunyikan tautan eksternal dokumentasi Streamlit pada kotak kamera */
+    div[data-testid="stCameraInput"] a {
+        display: none !important;
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -857,9 +862,13 @@ with tab_screen:
     if input_mode == "📷 Kamera Langsung (Webcam / HP)":
         st.markdown(
             f"""
-            <div style="background:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:0.85rem 1.1rem; margin-bottom:0.75rem;">
+            <div style="background:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:0.85rem 1.1rem; margin-bottom:0.6rem;">
                 <div style="font-weight:600; color:#0F172A; font-size:0.92rem;">Perekaman Citra Aktif — Subjek: <strong>{selected_patient}</strong></div>
                 <div style="font-size:0.82rem; color:#64748B; margin-top:2px;">Posisikan wajah tepat di hadapan lensa kamera, buka mata normal, dan pertahankan ekspresi netral santai.</div>
+            </div>
+            <div style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:6px; padding:0.55rem 0.85rem; margin-bottom:0.75rem; font-size:0.82rem; color:#166534; display:flex; align-items:center; gap:8px;">
+                <span>💡</span>
+                <span><strong>Jika kamera belum menyala:</strong> Klik ikon setelan di sebelah kiri alamat web (URL bar Chrome) lalu ubah opsi <strong>Camera / Kamera</strong> menjadi <strong>Izinkan (Allow)</strong>, kemudian segarkan (refresh) halaman.</span>
             </div>
             """,
             unsafe_allow_html=True,
