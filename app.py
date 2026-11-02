@@ -31,7 +31,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Injeksi Dynamic PWA Icon ke Header Peramban Mobile
+# Injeksi Dynamic PWA Icon & Pembersih Antarmuka Streamlit Cloud (Bebas Watermark)
 components.html(
     """
     <script>
@@ -39,22 +39,72 @@ components.html(
     const icon192 = 'https://raw.githubusercontent.com/AlessioWD/klinik-wajah-ai/main/static/icon-192.png';
     
     // Set apple-touch-icon untuk iOS & Android PWA
-    let appleIcon = window.parent.document.querySelector("link[rel='apple-touch-icon']");
-    if (!appleIcon) {
-        appleIcon = window.parent.document.createElement('link');
-        appleIcon.rel = 'apple-touch-icon';
-        window.parent.document.head.appendChild(appleIcon);
-    }
-    appleIcon.href = icon192;
+    try {
+        let appleIcon = window.parent.document.querySelector("link[rel='apple-touch-icon']");
+        if (!appleIcon) {
+            appleIcon = window.parent.document.createElement('link');
+            appleIcon.rel = 'apple-touch-icon';
+            window.parent.document.head.appendChild(appleIcon);
+        }
+        appleIcon.href = icon192;
 
-    // Set shortcut icon & favicon
-    let favIcon = window.parent.document.querySelector("link[rel*='icon']");
-    if (!favIcon) {
-        favIcon = window.parent.document.createElement('link');
-        favIcon.rel = 'shortcut icon';
-        window.parent.document.head.appendChild(favIcon);
+        let favIcon = window.parent.document.querySelector("link[rel*='icon']");
+        if (!favIcon) {
+            favIcon = window.parent.document.createElement('link');
+            favIcon.rel = 'shortcut icon';
+            window.parent.document.head.appendChild(favIcon);
+        }
+        favIcon.href = icon192;
+    } catch(e) {}
+
+    // Bersihkan Header (Fork/Github) & Floating Badge Streamlit Cloud (Mahkota Merah & Manage App)
+    function cleanStreamlitHostUI() {
+        const targetDocs = [document];
+        try {
+            if (window.parent && window.parent.document) targetDocs.push(window.parent.document);
+        } catch(e) {}
+        try {
+            if (window.top && window.top.document && window.top.document !== window.parent.document) targetDocs.push(window.top.document);
+        } catch(e) {}
+
+        targetDocs.forEach(doc => {
+            try {
+                // Sembunyikan header atas
+                const headers = doc.querySelectorAll('header, [data-testid="stHeader"], [data-testid="stToolbar"], #MainMenu');
+                headers.forEach(el => {
+                    el.style.setProperty('display', 'none', 'important');
+                    el.style.setProperty('visibility', 'hidden', 'important');
+                });
+
+                // Sembunyikan footer
+                const footers = doc.querySelectorAll('footer');
+                footers.forEach(el => el.style.setProperty('display', 'none', 'important'));
+
+                // Sembunyikan tombol melayang kanan bawah (Viewer badge, Manage app, Profile badge)
+                const badges = doc.querySelectorAll(
+                    '[class*="viewerBadge"], [class*="manageApp"], [data-testid="manage-app-button"], [class*="ProfileBadge"], [class*="AppControls"], .stAppDeployButton, [class*="StatusWidget"]'
+                );
+                badges.forEach(b => {
+                    b.style.setProperty('display', 'none', 'important');
+                    b.style.setProperty('visibility', 'hidden', 'important');
+                    b.style.setProperty('opacity', '0', 'important');
+                    b.style.setProperty('pointer-events', 'none', 'important');
+                });
+
+                // Target elemen mengambang di pojok kanan bawah
+                const allElements = doc.querySelectorAll('div, button, a');
+                allElements.forEach(item => {
+                    const cls = (item.className && typeof item.className === 'string') ? item.className : '';
+                    if (cls.includes('viewerBadge') || cls.includes('manageApp') || cls.includes('ProfileBadge')) {
+                        item.style.setProperty('display', 'none', 'important');
+                    }
+                });
+            } catch(err) {}
+        });
     }
-    favIcon.href = icon192;
+
+    setInterval(cleanStreamlitHostUI, 300);
+    cleanStreamlitHostUI();
     </script>
     """,
     height=0,
@@ -136,11 +186,18 @@ st.markdown(
     }
     .metric-label {
         font-size: 0.72rem;
-        font-weight: 600;
+        font-weight: 700;
         letter-spacing: 0.05em;
         text-transform: uppercase;
         color: #64748B;
-        margin-bottom: 0.3rem;
+        margin-bottom: 0.15rem;
+    }
+    .metric-sublabel {
+        font-size: 0.70rem;
+        color: #0284C7;
+        font-weight: 600;
+        margin-bottom: 0.35rem;
+        line-height: 1.25;
     }
     .metric-value {
         font-size: 1.65rem;
@@ -233,6 +290,37 @@ st.markdown(
         font-size: 0.9rem !important;
         color: #1E293B !important;
         margin: 0 !important;
+    }
+
+    /* Sembunyikan elemen bawaan Streamlit Cloud (Header, Footer, Watermark, Badges) */
+    header,
+    footer,
+    #MainMenu,
+    [data-testid="stHeader"],
+    [data-testid="stToolbar"],
+    [data-testid="stDecoration"],
+    [data-testid="stStatusWidget"],
+    .viewerBadge_container__1QSob,
+    .viewerBadge_link__1S137,
+    [class*="viewerBadge"],
+    [class*="manageApp"],
+    [data-testid="manage-app-button"],
+    div[class*="ProfileBadge"],
+    div[class*="floating-menu"] {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        height: 0 !important;
+        width: 0 !important;
+        pointer-events: none !important;
+        position: absolute !important;
+        left: -9999px !important;
+    }
+
+    /* Penyesuaian padding atas untuk tampilan seperti Native App */
+    .block-container {
+        padding-top: 1.5rem !important;
+        padding-bottom: 2rem !important;
     }
     </style>
     """,
@@ -350,7 +438,7 @@ st.markdown(
 
 
 def render_metric_cards(sym, jnd, pal, rppg, fat):
-    """Menampilkan 5 panel metrik klinis dengan estetika bersih."""
+    """Menampilkan 5 panel metrik dengan istilah yang mudah dipahami orang awam."""
     c1, c2, c3, c4, c5 = st.columns(5)
 
     with c1:
@@ -359,7 +447,8 @@ def render_metric_cards(sym, jnd, pal, rppg, fat):
         b_cls = "badge-normal" if risk == "LOW" else ("badge-moderate" if risk == "MODERATE" else "badge-alert")
         st.markdown(
             f"""<div class="metric-panel">
-            <div class="metric-label">Simetri Fasialis</div>
+            <div class="metric-label">Simetri Wajah</div>
+            <div class="metric-sublabel">Saraf Wajah / Stroke</div>
             <div class="metric-value">{score}%</div>
             <span class="status-badge {b_cls}">{sym.get('status', '-')}</span>
             </div>""",
@@ -372,7 +461,8 @@ def render_metric_cards(sym, jnd, pal, rppg, fat):
         b_cls = "badge-normal" if risk == "LOW" else ("badge-moderate" if risk == "MODERATE" else "badge-alert")
         st.markdown(
             f"""<div class="metric-panel">
-            <div class="metric-label">Indeks Sklera</div>
+            <div class="metric-label">Warna Putih Mata</div>
+            <div class="metric-sublabel">Kuning Sklera / Hati</div>
             <div class="metric-value">{score} <span class="metric-sub">/100</span></div>
             <span class="status-badge {b_cls}">{jnd.get('status', '-')}</span>
             </div>""",
@@ -385,7 +475,8 @@ def render_metric_cards(sym, jnd, pal, rppg, fat):
         b_cls = "badge-normal" if risk == "LOW" else ("badge-moderate" if risk == "MODERATE" else "badge-alert")
         st.markdown(
             f"""<div class="metric-panel">
-            <div class="metric-label">Perfusi Mukosa</div>
+            <div class="metric-label">Kemerahan Bibir</div>
+            <div class="metric-sublabel">Skrining Pucat / Anemia</div>
             <div class="metric-value">{score} <span class="metric-sub">/100</span></div>
             <span class="status-badge {b_cls}">{pal.get('status', '-')}</span>
             </div>""",
@@ -398,7 +489,8 @@ def render_metric_cards(sym, jnd, pal, rppg, fat):
         b_cls = "badge-normal" if rppg.get("is_stable") else "badge-moderate"
         st.markdown(
             f"""<div class="metric-panel">
-            <div class="metric-label">Nadi Nirsentuh</div>
+            <div class="metric-label">Detak Jantung</div>
+            <div class="metric-sublabel">Nadi via Kamera Dahi</div>
             <div class="metric-value">{bpm_str}</div>
             <span class="status-badge {b_cls}">{rppg.get('status', '-')}</span>
             </div>""",
@@ -411,11 +503,24 @@ def render_metric_cards(sym, jnd, pal, rppg, fat):
         b_cls = "badge-normal" if risk == "LOW" else ("badge-moderate" if risk == "MODERATE" else "badge-alert")
         st.markdown(
             f"""<div class="metric-panel">
-            <div class="metric-label">Status Palpebra</div>
-            <div class="metric-value">{100 - score:.0f}% <span class="metric-sub">Optimal</span></div>
+            <div class="metric-label">Kelopak Mata</div>
+            <div class="metric-sublabel">Tingkat Kantuk & Lelah</div>
+            <div class="metric-value">{100 - score:.0f}% <span class="metric-sub">Segar</span></div>
             <span class="status-badge {b_cls}">{fat.get('status', '-')}</span>
             </div>""",
             unsafe_allow_html=True,
+        )
+
+    # Panduan Pembacaan Istilah untuk Orang Awam
+    with st.expander("📖 Panduan Penjelasan Istilah untuk Orang Awam (Klik untuk membaca)"):
+        st.markdown(
+            """
+            - **1. Simetri Wajah (Keseimbangan Saraf Wajah):** Memeriksa apakah bibir, mata, dan sudut alis seimbang antara sisi kiri dan kanan. Kemiringan yang muncul mendadak merupakan tanda fisik awal serangan stroke (*F.A.S.T*) atau kelumpuhan saraf wajah (*Bell's Palsy*).
+            - **2. Warna Putih Mata (Sklera / Penyakit Kuning):** *Sklera* adalah istilah medis untuk bagian putih pada bola mata. Jika sklera tampak kekuningan, hal ini menandakan peningkatan pigmen empedu (*bilirubin*) akibat gangguan organ hati (seperti hepatitis) atau kantung empedu.
+            - **3. Kemerahan Bibir & Mata (Perfusi Mukosa / Kurang Darah):** *Perfusi* mengukur rona merah pada bibir dan selaput kelopak mata. Bila warnanya tampak pias atau putih pucat, ini merupakan indikasi kurang darah (*anemia*) atau sirkulasi yang kurang optimal.
+            - **4. Detak Jantung (Nadi Nirsentuh):** Teknologi sensor kamera cerdas yang membaca denyut nadi per menit (*BPM*) secara otomatis dari getaran mikro aliran darah di dahi tanpa perlu alat sentuh.
+            - **5. Kelopak Mata (Status Palpebra):** *Palpebra* adalah nama medis kelopak mata. Sistem mengukur bukaan kelopak mata dan pola kedipan untuk mendeteksi rasa kantuk berat atau kelelahan ekstrem.
+            """
         )
 
 
@@ -459,7 +564,7 @@ def process_and_display(frame_bgr: np.ndarray, is_video: bool = False):
         st.markdown("##### Visualisasi Topologi Landmark")
         st.image(
             cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB),
-            caption="Sumbu Proyeksi Vertikal, Segmentasi Sklera, Kontur Mukosa Bibir, & ROI Fotopletismografi",
+            caption="Panduan Sensor AI: Garis Keseimbangan Wajah, Warna Putih Mata, Rona Bibir, & Deteksi Nadi Dahi",
             use_container_width=True,
         )
 
@@ -592,10 +697,10 @@ with tab_screen:
         sample_case = st.selectbox(
             "Pilih Profil Uji:",
             [
-                "Profil 1: Fisiologis Normal (Simetris & Sklera Jernih)",
-                "Profil 2: Simulasi Asimetri Paresis Fasialis (Stroke Triage)",
-                "Profil 3: Simulasi Sklera Hiperbilirubinemia (Ikterus)",
-                "Profil 4: Simulasi Hipo-perfusi Mukosa Labialis (Anemia)",
+                "Profil 1: Fisiologis Sehat (Simetris & Mata Jernih)",
+                "Profil 2: Simulasi Asimetri Wajah (Tanda Awal Stroke / Bell's Palsy)",
+                "Profil 3: Simulasi Mata Menguning (Gangguan Hati / Empedu)",
+                "Profil 4: Simulasi Bibir Pucat (Skrining Kurang Darah / Anemia)",
             ],
             label_visibility="collapsed",
         )
@@ -642,10 +747,10 @@ with tab_history:
             chart_df = hist_df[["timestamp", "symmetry_score", "jaundice_score", "pallor_score", "bpm"]].copy()
             chart_df = chart_df.rename(
                 columns={
-                    "symmetry_score": "Simetri Fasialis (%)",
-                    "jaundice_score": "Indeks Sklera",
-                    "pallor_score": "Indeks Kepucatan",
-                    "bpm": "Nadi (BPM)",
+                    "symmetry_score": "Simetri Wajah (%)",
+                    "jaundice_score": "Kuning Mata / Sklera",
+                    "pallor_score": "Kepucatan Bibir",
+                    "bpm": "Detak Jantung (BPM)",
                 }
             )
             chart_df = chart_df.sort_values(by="timestamp")
@@ -657,12 +762,12 @@ with tab_history:
             hist_df.rename(
                 columns={
                     "timestamp": "Waktu",
-                    "symmetry_score": "Simetri (%)",
-                    "jaundice_score": "Sklera (/100)",
-                    "pallor_score": "Perfusi (/100)",
-                    "bpm": "Nadi (BPM)",
+                    "symmetry_score": "Simetri Wajah (%)",
+                    "jaundice_score": "Kuning Mata (/100)",
+                    "pallor_score": "Kepucatan Bibir (/100)",
+                    "bpm": "Detak Jantung (BPM)",
                     "primary_condition": "Hasil Diagnosa Banding",
-                    "urgency": "Urgensi",
+                    "urgency": "Tingkat Urgensi",
                     "notes": "Konfidensi",
                 }
             ),

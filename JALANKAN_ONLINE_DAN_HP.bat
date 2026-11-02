@@ -3,7 +3,7 @@ title AI Facial Health Screening - Mode Online & HP
 cd /d "%~dp0"
 cls
 echo ====================================================================
-echo      AI Facial Health Screening Dashboard (Mode Online & HP)
+echo      AI Facial Health Screening Dashboard (Mode Online dan HP)
 echo ====================================================================
 echo.
 echo Sedang menyalakan server aplikasi dan membuat link publik HTTPS...
