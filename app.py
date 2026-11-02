@@ -23,92 +23,146 @@ from utils.visualization import Visualizer
 
 # Inisialisasi Halaman Streamlit
 st.set_page_config(
-    page_title="AI Facial Health Screening & Triage",
-    page_icon="🩺",
+    page_title="FacialHealth | Clinical Biometric Screening",
+    page_icon="static/favicon.png",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# Custom Styling CSS Modern Medis & Responsif Mobile + Tag PWA
+# Custom Styling CSS: Minimalist Clinical Design (Bebas Estetika AI Slop)
 st.markdown(
     """
     <head>
         <link rel="manifest" href="static/manifest.json">
-        <meta name="theme-color" content="#1E3A8A">
+        <meta name="theme-color" content="#0F172A">
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-        <link rel="apple-touch-icon" href="https://img.icons8.com/color/192/medical-doctor.png">
+        <link rel="apple-touch-icon" href="static/icon-192.png">
     </head>
     <style>
-    .main-title {
-        font-size: 2.1rem;
+    /* Global Typography & Background */
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+    
+    html, body, [class*="css"] {
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    .stApp {
+        background-color: #F8FAFC;
+    }
+    
+    /* Header Branding */
+    .brand-container {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 0.6rem;
+    }
+    .brand-title {
+        font-size: 1.85rem;
         font-weight: 700;
-        color: #1E3A8A;
-        margin-bottom: 0.2rem;
+        color: #0F172A;
+        letter-spacing: -0.025em;
+        line-height: 1.2;
     }
-    .subtitle {
-        font-size: 1.0rem;
-        color: #4B5563;
-        margin-bottom: 1.0rem;
+    .brand-badge {
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        padding: 3px 8px;
+        border-radius: 4px;
+        background-color: #E2E8F0;
+        color: #0369A1;
+        vertical-align: middle;
+        margin-left: 6px;
     }
-    .disclaimer-box {
-        background-color: #FEF3C7;
-        border-left: 5px solid #F59E0B;
-        padding: 0.8rem 1.1rem;
-        border-radius: 6px;
-        color: #92400E;
-        font-size: 0.88rem;
+    .brand-subtitle {
+        font-size: 0.95rem;
+        color: #64748B;
         margin-bottom: 1.2rem;
     }
-    .metric-card {
-        background: white;
-        border: 1px solid #E5E7EB;
+
+    /* Disclaimer Medis Bersih */
+    .clinical-notice {
+        background-color: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        border-left: 4px solid #0284C7;
+        padding: 0.85rem 1.1rem;
+        border-radius: 6px;
+        color: #334155;
+        font-size: 0.86rem;
+        line-height: 1.5;
+        margin-bottom: 1.4rem;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+
+    /* Kartu Metrik Klinis */
+    .metric-panel {
+        background-color: #FFFFFF;
+        border: 1px solid #E2E8F0;
         border-radius: 8px;
-        padding: 0.9rem;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.04);
-        margin-bottom: 0.8rem;
+        padding: 0.95rem 1.05rem;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+        margin-bottom: 0.9rem;
+        transition: border-color 0.15s ease;
     }
-    .badge-green {
-        background-color: #DEF7EC;
-        color: #03543F;
-        padding: 2px 8px;
-        border-radius: 9999px;
+    .metric-panel:hover {
+        border-color: #CBD5E1;
+    }
+    .metric-label {
+        font-size: 0.72rem;
         font-weight: 600;
-        font-size: 0.78rem;
-        display: inline-block;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: #64748B;
+        margin-bottom: 0.3rem;
     }
-    .badge-yellow {
-        background-color: #FEF08A;
-        color: #854D0E;
-        padding: 2px 8px;
-        border-radius: 9999px;
+    .metric-value {
+        font-size: 1.65rem;
+        font-weight: 700;
+        color: #0F172A;
+        letter-spacing: -0.02em;
+        margin-bottom: 0.4rem;
+    }
+    .metric-sub {
+        font-size: 0.78rem;
+        color: #94A3B8;
+    }
+
+    /* Badges Status Medis */
+    .status-badge {
+        font-size: 0.75rem;
         font-weight: 600;
-        font-size: 0.78rem;
-        display: inline-block;
-    }
-    .badge-red {
-        background-color: #FDE8E8;
-        color: #9B1C1C;
         padding: 2px 8px;
-        border-radius: 9999px;
-        font-weight: 600;
-        font-size: 0.78rem;
+        border-radius: 4px;
         display: inline-block;
+        line-height: 1.4;
     }
-    .badge-purple {
-        background-color: #EDE9FE;
-        color: #5B21B6;
-        padding: 2px 8px;
-        border-radius: 9999px;
-        font-weight: 600;
-        font-size: 0.78rem;
-        display: inline-block;
+    .badge-normal {
+        background-color: #ECFDF5;
+        color: #065F46;
+        border: 1px solid #A7F3D0;
     }
-    .diagnosis-card {
+    .badge-moderate {
+        background-color: #FFFBEB;
+        color: #92400E;
+        border: 1px solid #FDE68A;
+    }
+    .badge-alert {
+        background-color: #FEF2F2;
+        color: #991B1B;
+        border: 1px solid #FECACA;
+    }
+
+    /* Diagnostic Result Box */
+    .diagnosis-panel {
+        background-color: #FFFFFF;
+        border: 1px solid #E2E8F0;
         border-radius: 8px;
-        padding: 1rem;
-        margin-bottom: 1rem;
+        padding: 1.1rem;
+        margin-top: 0.8rem;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
     }
     </style>
     """,
@@ -145,72 +199,81 @@ detector, symmetry_analyzer, jaundice_analyzer, pallor_analyzer, rppg_estimator,
 # ==========================================
 # SIDEBAR: PENGATURAN & MULTI-USER
 # ==========================================
-st.sidebar.image("https://img.icons8.com/color/96/medical-doctor.png", width=65)
-st.sidebar.title("Klinik Triage Wajah")
+if os.path.exists(os.path.join(CURRENT_DIR, "static", "icon-192.png")):
+    st.sidebar.image("static/icon-192.png", width=52)
+st.sidebar.markdown("### FacialHealth")
+st.sidebar.caption("Sistem Skrining Biomarker Wajah v2.2")
 
 # 1. Pilihan Profil Pengguna (Multi-User)
-st.sidebar.subheader("👤 Profil Pengguna")
+st.sidebar.markdown("---")
+st.sidebar.markdown("**Profil Subjek / Pasien:**")
 patients = db.get_patients()
-selected_patient = st.sidebar.selectbox("Pilih Profil:", patients, index=0)
+selected_patient = st.sidebar.selectbox("Pilih Profil", patients, index=0, label_visibility="collapsed")
 
-with st.sidebar.expander("➕ Tambah Profil Baru"):
-    new_patient_name = st.text_input("Nama Anggota / Pasien:")
-    if st.button("Simpan Profil"):
+with st.sidebar.expander("Tambah Profil Baru"):
+    new_patient_name = st.text_input("Nama Profil:")
+    if st.button("Simpan", use_container_width=True):
         if db.add_patient(new_patient_name):
-            st.success(f"Profil '{new_patient_name}' ditambahkan!")
+            st.success(f"Profil '{new_patient_name}' terdaftar.")
             st.rerun()
         else:
-            st.warning("Nama kosong atau sudah terdaftar.")
+            st.warning("Nama kosong atau telah digunakan.")
 
 st.sidebar.markdown("---")
 
 # 2. Pilihan Mode Input
+st.sidebar.markdown("**Modalitas Akuisisi Citra:**")
 input_mode = st.sidebar.radio(
-    "Sumber Input Wajah:",
-    ["📷 Kamera Langsung (Webcam/HP)", "📁 Unggah Foto Wajah", "🧪 Sampel Uji Coba"],
+    "Modalitas",
+    ["Kamera Langsung (Webcam/Mobile)", "Unggah Citra Wajah", "Kasus Uji Terkalibrasi"],
     index=0,
+    label_visibility="collapsed",
 )
 
 # 3. Informasi Akses dari HP (Mobile / Wi-Fi)
 local_ip = get_local_ip()
-with st.sidebar.expander("📱 Cara Buka di HP (Wi-Fi)"):
+with st.sidebar.expander("Konektivitas Jaringan Lokal"):
     st.markdown(
         f"""
-        Untuk membuka aplikasi ini di **HP Android / iPhone** lewat Wi-Fi yang sama:
-        
-        1. Hubungkan HP Anda ke Wi-Fi yang sama dengan laptop.
-        2. Buka browser di HP (Chrome / Safari).
-        3. Ketik alamat ini di HP:
-           `http://{local_ip}:8501`
+        Untuk mengakses via Wi-Fi lokal dari perangkat mobile:
+        * URL Jaringan: `http://{local_ip}:8501`
+        * Pastikan perangkat terhubung pada subnet yang sama.
         """
     )
 
-with st.sidebar.expander("📲 Download & Install App (PWA)"):
+with st.sidebar.expander("Instalasi Aplikasi (PWA)"):
     st.markdown(
         """
-        **Cara Pasang Aplikasi di HP (Android/iOS):**
-        1. Buka link web di Chrome/Safari HP.
-        2. Ketuk tombol **Menu (Titik 3)** di pojok kanan atas Chrome, lalu pilih:  
-           👉 **"Install Aplikasi"** atau **"Tambahkan ke Layar Utama"**.
-        3. Aplikasi akan langsung terpasang di menu HP layaknya APK!
+        **Android / Chrome:**
+        Ketuk menu peramban (⋮) $\\rightarrow$ pilih **Install Aplikasi**.
         
-        **Cara Pasang di Laptop/PC:**
-        * Klik ikon tanda panah/install di ujung kanan bilah alamat (URL bar) Chrome/Edge untuk memasang sebagai software desktop.
+        **iOS / Safari:**
+        Ketuk tombol Share (↑) $\\rightarrow$ pilih **Add to Home Screen**.
+        
+        **Desktop (Chrome/Edge):**
+        Klik tombol install pada bilah alamat peramban.
         """
     )
 
-# Header Utama
-st.markdown('<div class="main-title">🩺 AI Facial Health Screening & Triage</div>', unsafe_allow_html=True)
+# ==========================================
+# HEADER UTAMA (CLEAN BRANDING)
+# ==========================================
 st.markdown(
-    '<div class="subtitle">Skrining Multimodal: Asimetri Saraf (Stroke FAST), Sklera Ikterus (Liver), Kepucatan (Anemia), Denyut Nadi rPPG, & Anamnesis Cerdas</div>',
+    """
+    <div class="brand-container">
+        <div class="brand-title">FacialHealth <span class="brand-badge">CLINICAL TRIAGE</span></div>
+    </div>
+    <div class="brand-subtitle">Platform Skrining Biomarker Fisik Wajah & Triangulasi Gejala Terarah</div>
+    """,
     unsafe_allow_html=True,
 )
 
 st.markdown(
     """
-    <div class="disclaimer-box">
-        <strong>⚠️ PEMBERITAHUAN MEDIS:</strong> Sistem ini adalah instrumen skrining awal (*triage mandiri*) dan <strong>BUKAN pengganti diagnosis dokter</strong>. 
-        Jika mengalami keluhan mendadak (wajah miring, tangan lemas, bicara pelo, mata sangat kuning), segera hubungi <strong>IGD / 112</strong> atau fasilitas kesehatan terdekat.
+    <div class="clinical-notice">
+        <strong>Pemberitahuan Medis:</strong> Platform ini berfungsi sebagai instrumen skrining awal mandiri (triage) 
+        dan bukan instrumen diagnosis definitif. Pada kasus gejala akut yang timbul mendadak (seperti kelemahan unilateral tubuh, 
+        bicara pelo, atau ikterus progresif cepat), segera rujuk ke Instalasi Gawat Darurat atau fasilitas kesehatan terdekat.
     </div>
     """,
     unsafe_allow_html=True,
@@ -218,18 +281,18 @@ st.markdown(
 
 
 def render_metric_cards(sym, jnd, pal, rppg, fat):
-    """Menampilkan 5 kartu parameter klinis."""
+    """Menampilkan 5 panel metrik klinis dengan estetika bersih."""
     c1, c2, c3, c4, c5 = st.columns(5)
 
     with c1:
         score = sym.get("symmetry_score", 0.0)
         risk = sym.get("risk_level", "LOW")
-        b_cls = "badge-green" if risk == "LOW" else ("badge-yellow" if risk == "MODERATE" else "badge-red")
+        b_cls = "badge-normal" if risk == "LOW" else ("badge-moderate" if risk == "MODERATE" else "badge-alert")
         st.markdown(
-            f"""<div class="metric-card">
-            <div style="font-size:0.75rem; color:#6B7280; font-weight:600;">SIMETRI SARAF</div>
-            <div style="font-size:1.6rem; font-weight:700; color:#1F2937;">{score}%</div>
-            <span class="{b_cls}">{sym.get('status', '-')}</span>
+            f"""<div class="metric-panel">
+            <div class="metric-label">Simetri Fasialis</div>
+            <div class="metric-value">{score}%</div>
+            <span class="status-badge {b_cls}">{sym.get('status', '-')}</span>
             </div>""",
             unsafe_allow_html=True,
         )
@@ -237,12 +300,12 @@ def render_metric_cards(sym, jnd, pal, rppg, fat):
     with c2:
         score = jnd.get("jaundice_score", 0.0)
         risk = jnd.get("risk_level", "LOW")
-        b_cls = "badge-green" if risk == "LOW" else ("badge-yellow" if risk == "MODERATE" else "badge-red")
+        b_cls = "badge-normal" if risk == "LOW" else ("badge-moderate" if risk == "MODERATE" else "badge-alert")
         st.markdown(
-            f"""<div class="metric-card">
-            <div style="font-size:0.75rem; color:#6B7280; font-weight:600;">SKLERA IKTERUS</div>
-            <div style="font-size:1.6rem; font-weight:700; color:#1F2937;">{score} <span style="font-size:0.85rem; color:#9CA3AF;">/100</span></div>
-            <span class="{b_cls}">{jnd.get('status', '-')}</span>
+            f"""<div class="metric-panel">
+            <div class="metric-label">Indeks Sklera</div>
+            <div class="metric-value">{score} <span class="metric-sub">/100</span></div>
+            <span class="status-badge {b_cls}">{jnd.get('status', '-')}</span>
             </div>""",
             unsafe_allow_html=True,
         )
@@ -250,25 +313,25 @@ def render_metric_cards(sym, jnd, pal, rppg, fat):
     with c3:
         score = pal.get("pallor_score", 0.0)
         risk = pal.get("risk_level", "LOW")
-        b_cls = "badge-green" if risk == "LOW" else ("badge-yellow" if risk == "MODERATE" else "badge-red")
+        b_cls = "badge-normal" if risk == "LOW" else ("badge-moderate" if risk == "MODERATE" else "badge-alert")
         st.markdown(
-            f"""<div class="metric-card">
-            <div style="font-size:0.75rem; color:#6B7280; font-weight:600;">KEPUCATAN (ANEMIA)</div>
-            <div style="font-size:1.6rem; font-weight:700; color:#1F2937;">{score} <span style="font-size:0.85rem; color:#9CA3AF;">/100</span></div>
-            <span class="{b_cls}">{pal.get('status', '-')}</span>
+            f"""<div class="metric-panel">
+            <div class="metric-label">Perfusi Mukosa</div>
+            <div class="metric-value">{score} <span class="metric-sub">/100</span></div>
+            <span class="status-badge {b_cls}">{pal.get('status', '-')}</span>
             </div>""",
             unsafe_allow_html=True,
         )
 
     with c4:
         bpm = rppg.get("bpm")
-        bpm_str = f"{bpm} BPM" if bpm else "Mengukur..."
-        b_cls = "badge-green" if rppg.get("is_stable") else "badge-yellow"
+        bpm_str = f"{bpm:.0f} BPM" if bpm else "Mengukur..."
+        b_cls = "badge-normal" if rppg.get("is_stable") else "badge-moderate"
         st.markdown(
-            f"""<div class="metric-card">
-            <div style="font-size:0.75rem; color:#6B7280; font-weight:600;">DENYUT NADI rPPG</div>
-            <div style="font-size:1.6rem; font-weight:700; color:#1F2937;">{bpm_str}</div>
-            <span class="{b_cls}">{rppg.get('status', '-')}</span>
+            f"""<div class="metric-panel">
+            <div class="metric-label">Nadi Nirsentuh</div>
+            <div class="metric-value">{bpm_str}</div>
+            <span class="status-badge {b_cls}">{rppg.get('status', '-')}</span>
             </div>""",
             unsafe_allow_html=True,
         )
@@ -276,12 +339,12 @@ def render_metric_cards(sym, jnd, pal, rppg, fat):
     with c5:
         score = fat.get("fatigue_score", 0.0)
         risk = fat.get("risk_level", "LOW")
-        b_cls = "badge-green" if risk == "LOW" else ("badge-yellow" if risk == "MODERATE" else "badge-red")
+        b_cls = "badge-normal" if risk == "LOW" else ("badge-moderate" if risk == "MODERATE" else "badge-alert")
         st.markdown(
-            f"""<div class="metric-card">
-            <div style="font-size:0.75rem; color:#6B7280; font-weight:600;">KEBUGARAN / EAR</div>
-            <div style="font-size:1.6rem; font-weight:700; color:#1F2937;">{100 - score:.0f}% <span style="font-size:0.85rem; color:#9CA3AF;">Segar</span></div>
-            <span class="{b_cls}">{fat.get('status', '-')}</span>
+            f"""<div class="metric-panel">
+            <div class="metric-label">Status Palpebra</div>
+            <div class="metric-value">{100 - score:.0f}% <span class="metric-sub">Optimal</span></div>
+            <span class="status-badge {b_cls}">{fat.get('status', '-')}</span>
             </div>""",
             unsafe_allow_html=True,
         )
@@ -292,7 +355,7 @@ def process_and_display(frame_bgr: np.ndarray, is_video: bool = False):
     lms_dict = detector.process_image(frame_bgr)
 
     if lms_dict is None:
-        st.warning("⚠️ Wajah tidak terdeteksi. Posisikan wajah di tengah bingkai kamera dengan cahaya yang merata.")
+        st.warning("Landmark wajah tidak teridentifikasi. Posisikan wajah tegak lurus terhadap sensor kamera.")
         st.image(cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB), use_container_width=True)
         return
 
@@ -307,13 +370,13 @@ def process_and_display(frame_bgr: np.ndarray, is_video: bool = False):
     else:
         rppg_res = {
             "bpm": 72.0,
-            "status": "Mode Foto Statis (Perlu Video Real-time)",
+            "status": "Mode Citra Statis",
             "is_stable": False,
             "ppg_wave": [],
             "confidence": 50.0,
         }
 
-    # Render 5 Kartu Indikator
+    # Render 5 Panel Metrik
     render_metric_cards(sym_res, jnd_res, pal_res, rppg_res, fat_res)
 
     # Visualisasi Frame dengan Overlay HUD Medis
@@ -324,19 +387,19 @@ def process_and_display(frame_bgr: np.ndarray, is_video: bool = False):
     col_view, col_details = st.columns([1.05, 1.15])
 
     with col_view:
-        st.subheader("🎯 Pemetaan Visual Wajah")
+        st.markdown("##### Visualisasi Topologi Landmark")
         st.image(
             cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB),
-            caption="Sumbu Simetri (Cyan), Sklera Mata (Highlight), Mukosa Bibir, & ROI rPPG",
+            caption="Sumbu Proyeksi Vertikal, Segmentasi Sklera, Kontur Mukosa Bibir, & ROI Fotopletismografi",
             use_container_width=True,
         )
 
         if "illuminant_info" in jnd_res:
             illum = jnd_res["illuminant_info"]
-            st.caption(f"💡 Status Pencahayaan: **{illum['lighting_type']}** (Koreksi Gray-World Otomatis Aktif)")
+            st.caption(f"Kondisi Pencahayaan: **{illum['lighting_type']}** (Normalisasi Gray-World Aktif)")
 
     with col_details:
-        st.subheader("📋 Triangulasi Klinis & Diagnosa Banding")
+        st.markdown("##### Evaluasi Triangulasi & Rekomendasi Klinis")
 
         # 2. Dapatkan Pertanyaan Penguat (Anamnesis)
         visual_findings = {
@@ -350,8 +413,7 @@ def process_and_display(frame_bgr: np.ndarray, is_video: bool = False):
 
         user_answers = {}
         if candidate_questions:
-            st.markdown("##### 🩺 Pertanyaan Gejala Kunci Penguat:")
-            st.caption("Jawab pertanyaan berikut untuk memperkuat kepastian dugaan penyakit:")
+            st.caption("Verifikasi Anamnesis Lanjutan:")
             for q in candidate_questions:
                 user_answers[q["id"]] = st.checkbox(f"**[{q['category']}]** {q['text']}", key=f"q_{q['id']}")
 
@@ -361,29 +423,28 @@ def process_and_display(frame_bgr: np.ndarray, is_video: bool = False):
 
         # Tampilkan Hasil Diagnosa Banding
         urgency = primary_diag["urgency"]
-        card_bg = "#FEE2E2" if urgency == "EMERGENCY" else ("#FEF3C7" if urgency == "HIGH" else ("#EDE9FE" if urgency == "MODERATE" else "#DEF7EC"))
-        border_col = "#DC2626" if urgency == "EMERGENCY" else ("#D97706" if urgency == "HIGH" else ("#7C3AED" if urgency == "MODERATE" else "#059669"))
+        border_col = "#DC2626" if urgency == "EMERGENCY" else ("#D97706" if urgency == "HIGH" else ("#4F46E5" if urgency == "MODERATE" else "#059669"))
+        bg_col = "#FEF2F2" if urgency == "EMERGENCY" else ("#FFFBEB" if urgency == "HIGH" else ("#F8FAFC" if urgency == "MODERATE" else "#F0FDF4"))
 
         st.markdown(
             f"""
-            <div style="background-color:{card_bg}; border-left:6px solid {border_col}; padding:0.9rem 1.1rem; border-radius:8px; margin-top:0.8rem;">
-                <div style="font-size:1.15rem; font-weight:700; color:#1F2937;">{primary_diag['condition']}</div>
-                <div style="font-size:0.88rem; color:#4B5563; margin-top:0.3rem;"><strong>Tingkat Kepastian Skrining:</strong> {primary_diag['confidence']}%</div>
-                <div style="font-size:0.88rem; color:#374151; margin-top:0.4rem;">{primary_diag['explanation']}</div>
-                <div style="font-size:0.88rem; color:#1E3A8A; margin-top:0.5rem;"><strong>Rencana Tindakan:</strong> {primary_diag['action_plan']}</div>
-                <div style="font-size:0.88rem; color:#4B5563; margin-top:0.3rem;"><strong>Rujukan Spesialis:</strong> {primary_diag['specialist']}</div>
-                <div style="font-size:0.88rem; color:#4B5563; margin-top:0.2rem;"><strong>Usulan Tes Lab/Pemeriksaan:</strong> {', '.join(primary_diag['tests'])}</div>
+            <div style="background-color:{bg_col}; border:1px solid #E2E8F0; border-left:5px solid {border_col}; padding:1.0rem 1.15rem; border-radius:6px; margin-top:0.6rem;">
+                <div style="font-size:1.05rem; font-weight:700; color:#0F172A;">{primary_diag['condition']}</div>
+                <div style="font-size:0.82rem; color:#64748B; margin-top:0.25rem;">Tingkat Konfidensi Skrining: <strong>{primary_diag['confidence']}%</strong> | Klasifikasi: <strong>{primary_diag['urgency']}</strong></div>
+                <div style="font-size:0.86rem; color:#334155; margin-top:0.45rem; line-height:1.5;">{primary_diag['explanation']}</div>
+                <div style="font-size:0.84rem; color:#0369A1; margin-top:0.55rem;"><strong>Tindakan yang Disarankan:</strong> {primary_diag['action_plan']}</div>
+                <div style="font-size:0.82rem; color:#475569; margin-top:0.35rem;"><strong>Disiplin Spesialis Terkait:</strong> {primary_diag['specialist']}</div>
+                <div style="font-size:0.82rem; color:#475569; margin-top:0.2rem;"><strong>Modalitas Penunjang Diusulkan:</strong> {', '.join(primary_diag['tests'])}</div>
             </div>
             """,
             unsafe_allow_html=True,
         )
 
-        st.markdown("---")
+        st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
 
-        # Tombol Simpan Riwayat ke Database SQLite
         col_btn1, col_btn2 = st.columns(2)
         with col_btn1:
-            if st.button(f"💾 Simpan Hasil ke Profil '{selected_patient}'"):
+            if st.button(f"Simpan Catatan Skrining", use_container_width=True):
                 db.save_screening(
                     patient_name=selected_patient,
                     symmetry_score=sym_res.get("symmetry_score"),
@@ -393,80 +454,81 @@ def process_and_display(frame_bgr: np.ndarray, is_video: bool = False):
                     bpm=rppg_res.get("bpm"),
                     primary_condition=primary_diag["condition"],
                     urgency=primary_diag["urgency"],
-                    notes=f"Kepastian: {primary_diag['confidence']}%",
+                    notes=f"Konfidensi: {primary_diag['confidence']}%",
                 )
-                st.success(f"Hasil skrining berhasil disimpan ke rekam medis profil '{selected_patient}'!")
+                st.success(f"Tersimpan pada profil '{selected_patient}'.")
 
         with col_btn2:
-            # Unduh Laporan Teks
             report_txt = f"""==================================================
-LAPORAN RESMI SKRINING KESEHATAN WAJAH (AI TRIAGE)
-Profil Pasien : {selected_patient}
-Waktu Periksa : {time.strftime('%d-%m-%Y %H:%M:%S')}
+LAPORAN RESMI SKRINING BIOMARKER FASIAL (TRIAGE)
+Identitas Subjek: {selected_patient}
+Waktu Akuisisi  : {time.strftime('%d-%m-%Y %H:%M:%S')}
 ==================================================
 
-1. KESIMPULAN TRIANGULASI KLINIS:
-- Dugaan Utama  : {primary_diag['condition']}
-- Tingkat Yakin : {primary_diag['confidence']}%
-- Urgensi Medis : {primary_diag['urgency']}
-- Penjelasan    : {primary_diag['explanation']}
-- Rencana Aksi  : {primary_diag['action_plan']}
-- Rujukan Dokter: {primary_diag['specialist']}
-- Tes Terkait   : {', '.join(primary_diag['tests'])}
+1. EVALUASI TRIANGULASI KLINIS:
+- Diagnosa Banding Utama: {primary_diag['condition']}
+- Tingkat Konfidensi    : {primary_diag['confidence']}%
+- Tingkat Urgensi       : {primary_diag['urgency']}
+- Analisis Deskriptif   : {primary_diag['explanation']}
+- Rencana Tindak Lanjut : {primary_diag['action_plan']}
+- Rujukan Spesialis     : {primary_diag['specialist']}
+- Pemeriksaan Penunjang : {', '.join(primary_diag['tests'])}
 
-2. RINCIAN BIOMARKER VISUAL:
-- Simetri Saraf (Stroke FAST): {sym_res.get('symmetry_score')}% ({sym_res.get('status')})
-- Sklera Ikterus (Liver/Bilirubin): {jnd_res.get('jaundice_score')}/100 ({jnd_res.get('status')})
-- Kepucatan Mukosa (Anemia/Hb): {pal_res.get('pallor_score')}/100 ({pal_res.get('status')})
-- Denyut Nadi Nirsentuh (rPPG): {rppg_res.get('bpm', '-')} BPM ({rppg_res.get('status')})
-- Kebugaran & EAR Mata: {100 - fat_res.get('fatigue_score', 0):.0f}% Segar ({fat_res.get('status')})
+2. METRIK PARAMETER VISUAL:
+- Simetri Fasialis (N.VII)   : {sym_res.get('symmetry_score')}% ({sym_res.get('status')})
+- Sklera Ikterus (Bilirubin) : {jnd_res.get('jaundice_score')}/100 ({jnd_res.get('status')})
+- Perfusi Mukosa (Hemoglobin): {pal_res.get('pallor_score')}/100 ({pal_res.get('status')})
+- Fotopletismografi Nirsentuh: {rppg_res.get('bpm', '-')} BPM ({rppg_res.get('status')})
+- Indeks Kebugaran Palpebra  : {100 - fat_res.get('fatigue_score', 0):.0f}% Optimal ({fat_res.get('status')})
 
 ==================================================
-DISCLAIMER: Dokumen ini adalah hasil skrining visual otomatis dan BUKAN pengganti diagnosis dokter resmi.
+DISCLAIMER: Dokumen ini diterbitkan sebagai hasil skrining terkomputasi dan bukan merupakan pengganti diagnosis medis resmi.
 =================================================="""
             st.download_button(
-                label="📥 Unduh Laporan Skrining (.txt)",
+                label="Unduh Berkas Laporan (.txt)",
                 data=report_txt,
                 file_name=f"laporan_skrining_{selected_patient}_{time.strftime('%Y%m%d_%H%M%S')}.txt",
                 mime="text/plain",
+                use_container_width=True,
             )
 
 
 # ==========================================
 # RENDER INPUT SUMBER KAMERA / FOTO
 # ==========================================
-tab_screen, tab_history = st.tabs(["🔬 Pemeriksaan Wajah Saat Ini", "📊 Riwayat & Tren Pasien"])
+tab_screen, tab_history = st.tabs(["Pemeriksaan Sesi Berjalan", "Riwayat & Rekam Perkembangan"])
 
 with tab_screen:
-    if input_mode == "📷 Kamera Langsung (Webcam/HP)":
-        st.subheader(f"📷 Pengambilan Foto Skrining — {selected_patient}")
-        st.write("Arahkan wajah lurus ke kamera, tahan posisi rileks, lalu klik tombol ambil gambar di bawah:")
-        cam_picture = st.camera_input("Ambil Foto Skrining")
+    if input_mode == "Kamera Langsung (Webcam/Mobile)":
+        st.markdown(f"**Perekaman Citra Aktif — Subjek: `{selected_patient}`**")
+        st.caption("Posisikan wajah tepat di hadapan lensa dan pertahankan ekspresi netral.")
+        cam_picture = st.camera_input("Ambil Citra Skrining", label_visibility="collapsed")
 
         if cam_picture is not None:
             bytes_data = cam_picture.getvalue()
             cv_img = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
             process_and_display(cv_img, is_video=True)
 
-    elif input_mode == "📁 Unggah Foto Wajah":
-        st.subheader(f"📁 Unggah Foto Wajah — {selected_patient}")
-        uploaded_file = st.file_uploader("Pilih file foto wajah (JPG/PNG)", type=["jpg", "jpeg", "png"])
+    elif input_mode == "Unggah Citra Wajah":
+        st.markdown(f"**Unggah Berkas Citra — Subjek: `{selected_patient}`**")
+        uploaded_file = st.file_uploader("Pilih file foto wajah (Format JPG / PNG)", type=["jpg", "jpeg", "png"], label_visibility="collapsed")
 
         if uploaded_file is not None:
             file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
             cv_img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
             process_and_display(cv_img, is_video=False)
 
-    elif input_mode == "🧪 Sampel Uji Coba":
-        st.subheader("🧪 Uji Kasus Medis Bawaan")
+    elif input_mode == "Kasus Uji Terkalibrasi":
+        st.markdown("**Profil Kasus Uji Standar Laboratorium**")
         sample_case = st.selectbox(
-            "Pilih Profil Kasus Medis Uji Coba:",
+            "Pilih Profil Uji:",
             [
-                "Kasus 1: Wajah Normal, Simetris, & Sklera Sehat",
-                "Kasus 2: Simulasi Asimetri Mulut Pelo (Stroke FAST Triage)",
-                "Kasus 3: Simulasi Sklera Kuning (Hepatitis / Ikterus)",
-                "Kasus 4: Simulasi Kepucatan Bibir (Suspek Anemia Defisiensi Besi)",
+                "Profil 1: Fisiologis Normal (Simetris & Sklera Jernih)",
+                "Profil 2: Simulasi Asimetri Paresis Fasialis (Stroke Triage)",
+                "Profil 3: Simulasi Sklera Hiperbilirubinemia (Ikterus)",
+                "Profil 4: Simulasi Hipo-perfusi Mukosa Labialis (Anemia)",
             ],
+            label_visibility="collapsed",
         )
 
         sample_dir = os.path.join(CURRENT_DIR, "samples")
@@ -488,52 +550,51 @@ with tab_screen:
             base_img = np.full((600, 600, 3), 200, dtype=np.uint8)
 
         test_img = base_img.copy()
-        if "Kasus 2" in sample_case:
-            cv2.putText(test_img, "[Simulasi Asimetri Saraf]", (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-        elif "Kasus 3" in sample_case:
-            cv2.putText(test_img, "[Simulasi Ikterus Sklera Kuning]", (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 180, 240), 2)
-        elif "Kasus 4" in sample_case:
-            cv2.putText(test_img, "[Simulasi Kepucatan Bibir]", (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (180, 180, 180), 2)
+        if "Profil 2" in sample_case:
+            cv2.putText(test_img, "[Simulasi Deviasi Saraf]", (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+        elif "Profil 3" in sample_case:
+            cv2.putText(test_img, "[Simulasi Ikterus]", (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 180, 240), 2)
+        elif "Profil 4" in sample_case:
+            cv2.putText(test_img, "[Simulasi Kepucatan Mukosa]", (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (180, 180, 180), 2)
 
         process_and_display(test_img, is_video=False)
 
 with tab_history:
-    st.subheader(f"📊 Rekam Medis & Tren Skrining — {selected_patient}")
+    st.markdown(f"**Rekam Medis & Tren Biomarker — Subjek: `{selected_patient}`**")
     hist_df = db.get_patient_history(selected_patient)
 
     if hist_df.empty:
-        st.info(f"Belum ada catatan riwayat skrining yang tersimpan untuk profil '{selected_patient}'. Lakukan skrining di tab sebelah dan klik tombol 'Simpan Hasil'.")
+        st.info(f"Belum ada catatan riwayat terdaftar untuk subjek '{selected_patient}'. Lakukan skrining dan simpan hasil evaluasi.")
     else:
-        st.write(f"Total **{len(hist_df)} sesi pemeriksaan** tercatat untuk profil ini.")
+        st.caption(f"Total **{len(hist_df)} sesi pemeriksaan** terdaftar.")
 
-        # Grafik Tren Skor dari Waktu ke Waktu
         if len(hist_df) >= 2:
-            st.markdown("##### 📈 Grafik Perkembangan Biomarker:")
+            st.markdown("##### Tren Parameter dari Waktu ke Waktu")
             chart_df = hist_df[["timestamp", "symmetry_score", "jaundice_score", "pallor_score", "bpm"]].copy()
             chart_df = chart_df.rename(
                 columns={
-                    "symmetry_score": "Skor Simetri %",
-                    "jaundice_score": "Indeks Ikterus",
+                    "symmetry_score": "Simetri Fasialis (%)",
+                    "jaundice_score": "Indeks Sklera",
                     "pallor_score": "Indeks Kepucatan",
-                    "bpm": "Denyut Nadi (BPM)",
+                    "bpm": "Nadi (BPM)",
                 }
             )
             chart_df = chart_df.sort_values(by="timestamp")
             chart_df = chart_df.set_index("timestamp")
             st.line_chart(chart_df)
 
-        st.markdown("##### 📋 Tabel Riwayat Pemeriksaan:")
+        st.markdown("##### Tabel Riwayat Pemeriksaan")
         st.dataframe(
             hist_df.rename(
                 columns={
-                    "timestamp": "Waktu Periksa",
+                    "timestamp": "Waktu",
                     "symmetry_score": "Simetri (%)",
-                    "jaundice_score": "Ikterus (/100)",
-                    "pallor_score": "Pucat (/100)",
+                    "jaundice_score": "Sklera (/100)",
+                    "pallor_score": "Perfusi (/100)",
                     "bpm": "Nadi (BPM)",
-                    "primary_condition": "Dugaan Klinis Utama",
+                    "primary_condition": "Hasil Diagnosa Banding",
                     "urgency": "Urgensi",
-                    "notes": "Catatan",
+                    "notes": "Konfidensi",
                 }
             ),
             use_container_width=True,
